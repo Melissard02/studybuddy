@@ -1,0 +1,84 @@
+/* Global Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: system-ui, sans-serif;
+    background-color: #fffaf4; /* soft orange */
+    color: #333;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* App container */
+.app-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    background: #fffaf4;
+    padding: 2rem;
+    text-align: center;
+}
+
+.app-title {
+    font-size: 3rem;
+    font-weight: bold;
+    color: #9a4306;
+    margin-bottom: 1rem;
+}
+
+.app-subtitle {
+    font-size: 1.2rem;
+    color: #444;
+}
+
+.note-form {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.note-input {
+    padding: 0.5rem 1rem;
+    font-size: 1.2rem;
+    border-radius: 10px;
+    border: 2px solid #ccc;
+    width: 300px;
+}
+
+.note-button {
+    background-color: #80442e;
+    color: #fff;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.note-button:hover {
+    background-color: #c3620c;
+}
+
+.note-list {
+    width: 100%;
+    max-width: 500px;
+}
+
+.note-item {
+    background-color: #fff;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 2rem;
+    box-shadow: 2px 2px 5px #888;
+}
+
+.note-item small {
+    color: #888;
+    font-size: 0.7rem;
+}
