@@ -13,6 +13,12 @@ function App() {
 
     //Fetch them notes when load
     useEffect(() => {
+        // Load notes before the fetch
+        const savedNotes = localStorage.getItem("notes");
+        if (savedNotes) {
+            setNotes(JSON.parse(savedNotes));
+        }
+
         // Tells front-end what port the backend is on
         fetch('http://localhost:5000/')
             // Converts server response to a string that react can read
@@ -22,6 +28,10 @@ function App() {
             // Logs errors to the console
             .catch((err) => console.log(err));
     }, []);
+
+    useEffect(() => {
+        localStorage.setItem('notes', JSON.stringify(notes));
+    }, [notes]);
 
     //Sends new note to the backend for storage
     const handleAddNote = (e) => {
@@ -41,6 +51,19 @@ function App() {
             .catch((err) => console.error("Error saving note:", err));
     };
 
+    // Delete note logic
+    const handleDeleteNote = (id) => {
+        fetch(`http://localhost:5000/notes/${id}`, {
+            method: "DELETE",
+        })
+        .then((res) => res.json())
+        .then(() => {
+            setNotes((prev) => prev.filter((note) => note.id !== id));
+        })
+        .catch((err) => console.log(err));
+    };
+
+    // HTML Junk
     return (
         <div className="app-container">
             <h1 className="app-title">StudyBuddy</h1>
@@ -56,13 +79,28 @@ function App() {
             </form>
             <div className="notes-lists">
                 {notes.length === 0 ? (
+                    // Default message in the saved notes area
                     <p className="no-notes">No notes yet! Start writing!</p>
                 ): (
                     notes.map((note) => (
                         <div key={note.id} className="note-item">
+
+                            {/*Display the notes in the saved area*/}
                             <p>{note.text}</p>
-                            {/*Fix the date, its not populating correctly */}
-                            <small>{new Date(note.createdAt).toLocaleString()}</small>
+
+                            {/*Fix the date, it's not populating correctly */}
+                            <small>
+                                {note.createdAt
+                                    ? new Date(note.createdAt).toLocaleString()
+                                : "No date available"}
+                            </small>
+
+                            {/*Delete Note Button*/}
+                            <button
+                                className="delete-button"
+                                onClick={() => {handleDeleteNote(note.id)}}
+                            >Delete
+                            </button>
                         </div>
                     ))
                 )}

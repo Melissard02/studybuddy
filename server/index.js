@@ -4,15 +4,23 @@ import cors from 'cors';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+let notes = [];
 
 app.use(cors());
 app.use(express.json());
+
 
 // Get the URL Port to start the server
 app.get('/', (req, res) => {
     res.send('StudyBuddy server started!');
 });
 
+// App checks to see if server is running, displays message if true
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+})
+
+// Display Notes
 app.post('/notes', (req, res) => {
     // Get text from the front-end
     const { text } = req.body;
@@ -25,6 +33,7 @@ app.post('/notes', (req, res) => {
     const newNote = {
         id: Date.now(),
         text: text,
+        createdAt: new Date().toISOString(),
     }
 
     // Push the newNote into the array
@@ -38,9 +47,15 @@ app.get('/notes', (req, res) => {
     res.json(notes);
 });
 
-// App checks to see if server is running, displays message if true
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-})
+// Delete Note by ID
+app.delete('/notes/:id', (req, res) => {
+    const { id } = req.params;
+    const noteIndex = notes.findIndex((note) => note.id === id);
 
-let notes = [];
+    if (noteIndex === -1) {
+        return res.status(404).json({ error: 'Note not found' });
+    }
+
+    const deletedNote = notes.splice(noteIndex, 1);
+    res.json(deletedNote[0]);
+})
