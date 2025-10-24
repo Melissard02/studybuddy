@@ -122,3 +122,19 @@ body {
     background-color: var(--secondary);
     color: var(--darktext)
 }
+
+.ai-button {
+    background: var(--light);
+    color: var(--darktext);
+    font-weight: bold;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.ai-button:hover {
+    background-color: var(--secondary);
+    color: var(--darktext)
+}

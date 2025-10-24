@@ -51,6 +51,20 @@ function App() {
             .catch((err) => console.error("Error saving note:", err));
     };
 
+    //Summarize notes logic
+    const handleSummarize = () => {
+        fetch("http://localhost:5000/summarize", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ notes }),
+        })
+        .then((res) => res.json())
+            .then((data) => {
+                alert("Summary:\n\n" + data.summary);
+            })
+        .catch((err) => console.error("Error summarizing:", err));
+    };
+
     // Delete note logic
     const handleDeleteNote = (id) => {
         fetch(`http://localhost:5000/notes/${id}`, {
@@ -77,6 +91,9 @@ function App() {
                 />
                 <button type="submit" className="note-button">Save</button>
             </form>
+            <button className="ai-button" onClick={handleSummarize}>
+                Summarize Notes
+            </button>
             <div className="notes-lists">
                 {notes.length === 0 ? (
                     // Default message in the saved notes area
