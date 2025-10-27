@@ -1,6 +1,7 @@
 import express from 'express';
 // cors (Cross-Origin Resource Sharing) lets front-end safely talk to back-end
 import cors from 'cors';
+import fs from 'fs';
 import OpenAI from "openai";
 import dotenv from 'dotenv';
 dotenv.config();
@@ -12,6 +13,18 @@ const client = new OpenAI({
 const app = express();
 const PORT = process.env.PORT || 5000;
 let notes = [];
+
+const NOTES_FILE = "./notes.json";
+
+if (fs.existsSync(NOTES_FILE)) {
+    try {
+        const data = fs.readFileSync(NOTES_FILE, "utf8");
+        notes = JSON.parse(data);
+        console.log(`Loaded ${notes.length} notes from notes.json`);
+    } catch (error) {
+        console.error("Error reading notes.json", error);
+    }
+}
 
 app.use(cors());
 app.use(express.json());
@@ -45,6 +58,10 @@ app.post('/notes', (req, res) => {
 
     // Push the newNote into the array
     notes.push(newNote);
+
+    // Save to file
+    fs.writeFileSync(NOTES_FILE, JSON.stringify(notes, null, 2));
+
     // Create a status code 201, new object created, send it back to the JSON
     res.status(201).json(newNote);
 });
@@ -57,13 +74,17 @@ app.get('/notes', (req, res) => {
 // Delete Note by ID
 app.delete('/notes/:id', (req, res) => {
     const { id } = req.params;
-    const noteIndex = notes.findIndex((note) => note.id === id);
+    const noteIndex = notes.findIndex((note) => note.id === Number(id));
 
     if (noteIndex === -1) {
         return res.status(404).json({ error: 'Note not found' });
     }
 
     const deletedNote = notes.splice(noteIndex, 1);
+
+    // Save updated list to file
+    fs.writeFileSync(NOTES_FILE, JSON.stringify(notes, null, 2));
+
     res.json(deletedNote[0]);
 })
 
