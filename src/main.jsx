@@ -8,8 +8,12 @@ import './style.css';
 function App() {
     // Keep track of notes fetched from backend
     const [notes, setNotes] = useState([]);
+
     // Store what's typed in the input box
     const [newNote, setNewNote] = useState("");
+
+    // Update notes
+    const [editNoteId, setEditNoteId] = useState(null);
 
     //Fetch them notes when load
     useEffect(() => {
@@ -28,7 +32,6 @@ function App() {
             // Logs errors to the console
             .catch((err) => console.log(err));
     }, []);
-
     useEffect(() => {
         localStorage.setItem('notes', JSON.stringify(notes));
     }, [notes]);
@@ -77,47 +80,104 @@ function App() {
         .catch((err) => console.log(err));
     };
 
+    // Update note logic
+    const handleUpdateNote = (e) => {
+        e.preventDefault();
+        if (!newNote.trim()) return;
+
+        fetch(`http://localhost:5000/notes/${editNoteId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text: newNote }),
+        })
+            .then((res) => res.json())
+            .then((updatedNote) => {
+                setNotes((prev) =>
+                    prev.map((note) =>
+                        note.id === updatedNote.id ? updatedNote : note
+                    )
+                );
+                setEditNoteId(null);
+                setNewNote("");
+            })
+            .catch((err) => console.error("Error updating note:", err));
+    };
+
+
     // HTML Junk
     return (
         <div className="app-container">
             <h1 className="app-title">StudyBuddy</h1>
-            <form onSubmit={handleAddNote} className="note-form">
+            {/*<img src="images/buddy.png" alt="Classic Buddy" width="300" height="200"/>*/}
+            <form onSubmit={editNoteId ? handleUpdateNote : handleAddNote} className="note-form">
                 <input
                     type="text"
                     value={newNote}
                     onChange={(e) => setNewNote(e.target.value)}
-                    placeholder="Write your new note..."
+                    placeholder="Write your note..."
                     className="note-input"
                 />
-                <button type="submit" className="note-button">Save</button>
+                <button type="submit" className="note-button">
+                    {editNoteId ? "Update" : "Save"}
+                </button>
+                {editNoteId && (
+                    <button
+                        type="button"
+                        className="cancel-button"
+                        onClick={() => {
+                            setEditNoteId(null);
+                            setNewNote("");
+                        }}
+                    >
+                        Cancel
+                    </button>
+                )}
             </form>
+
             <button className="ai-button" onClick={handleSummarize}>
                 Summarize Notes
             </button>
-            <div className="notes-lists">
+            <div className="note-list">
                 {notes.length === 0 ? (
                     // Default message in the saved notes area
                     <p className="no-notes">No notes yet! Start writing!</p>
-                ): (
+                ) : (
                     notes.map((note) => (
                         <div key={note.id} className="note-item">
 
                             {/*Display the notes in the saved area*/}
                             <p>{note.text}</p>
 
-                            {/*Fix the date, it's not populating correctly */}
                             <small>
                                 {note.createdAt
-                                    ? new Date(note.createdAt).toLocaleString()
-                                : "No date available"}
+                                    ? new Date(note.createdAt).toLocaleString([], {
+                                        month: 'short',
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                    })
+                                    : "No date available"}
                             </small>
+                            <div className="button-container">
+                                <button
+                                    className="edit-button"
+                                    onClick={() => {
+                                        setEditNoteId(note.id);
+                                        setNewNote(note.text);
+                                    }}
+                                >Edit
+                                </button>
 
-                            {/*Delete Note Button*/}
-                            <button
-                                className="delete-button"
-                                onClick={() => {handleDeleteNote(note.id)}}
-                            >Delete
-                            </button>
+
+                                {/*Delete Note Button*/}
+                                <button
+                                    className="delete-button"
+                                    onClick={() => {
+                                        handleDeleteNote(note.id)
+                                    }}
+                                >Delete
+                                </button>
+                            </div>
                         </div>
                     ))
                 )}
@@ -125,7 +185,6 @@ function App() {
         </div>
     );
 }
-
 
 
 ReactDOM.createRoot(document.getElementById("root")).render(<App />);

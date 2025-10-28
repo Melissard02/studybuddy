@@ -27,12 +27,8 @@
 
 body {
     font-family: system-ui, sans-serif;
-    background-color: var(--light);
+    background: linear-gradient(180deg, #d8f1c9 0%, #ffffff 100%);
     color: var(--darktext);
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
 }
 
 /* App container */
@@ -40,10 +36,14 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: flex-start;
     min-height: 100vh;
-    background: var(--light);
-    padding: 2rem;
+    padding: 4rem 1rem;
+    width: 100%;
+    max-width: none;
+    margin: 0 auto;
     text-align: center;
+    border-radius: 12px;
 }
 
 .app-title {
@@ -53,6 +53,15 @@ body {
     margin-bottom: 1rem;
 }
 
+button {
+    transition: all 0.2s ease-in-out;
+}
+
+button:hover {
+    transform: scale(1.05);
+}
+
+
 .note-form {
     display: flex;
     gap: 1rem;
@@ -60,11 +69,14 @@ body {
 }
 
 .note-input {
-    padding: 0.5rem 1rem;
     font-size: 1.2rem;
     border-radius: 10px;
-    border: 2px solid #ccc;
-    width: 300px;
+    border: 2px solid #e7e8e6;
+    background-color: var(--white);
+    padding: 1rem;
+    width: 250px; /* fixed width so they align neatly */
+    box-shadow: 2px 2px 5px #888;
+    transition: transform 0.2s ease-in-out;
 }
 
 .note-button {
@@ -82,8 +94,12 @@ body {
 }
 
 .note-list {
+    display: flex;
+    flex-wrap: wrap; /* makes them go left to right, then down */
+    justify-content: center; /* centers them horizontally */
+    gap: 1.5rem; /* spacing between note cards */
     width: 100%;
-    max-width: 500px;
+    margin-top: 2rem;
 }
 
 .note-item {
@@ -98,7 +114,7 @@ body {
 }
 
 .note-item:hover {
-    transform: scale(1.1);
+    transform: scale(1.01);
     transition: transform 0.2s ease-in-out;
 }
 
@@ -137,4 +153,42 @@ body {
 .ai-button:hover {
     background-color: var(--secondary);
     color: var(--darktext)
+}
+
+.edit-button {
+    background-color: var(--primary);
+    color: var(--lighttext);
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 10px;
+    cursor: pointer;
+    margin-top: 0.5rem;
+    transition: 0.2s;
+}
+
+.edit-button:hover {
+    background-color: var(--secondary);
+    color: var(--darktext)
+}
+
+.cancel-button {
+    background-color: var(--primary);
+    color: var(--lighttext);
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.cancel-button:hover {
+    background-color: var(--secondary);
+    color: var(--darktext)
+}
+
+.button-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 0.5rem;
 }

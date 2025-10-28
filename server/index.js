@@ -88,7 +88,22 @@ app.delete('/notes/:id', (req, res) => {
     res.json(deletedNote[0]);
 })
 
+app.put("/notes/:id", (req, res) => {
+    const { id } = req.params;
+    const { text } = req.body;
 
+    const noteIndex = notes.findIndex((note) => note.id === Number(id));
+    if (noteIndex === -1) {
+        return res.status(404).json({ error: 'Note not found' });
+    }
+
+    notes[noteIndex].text = text;
+    notes[noteIndex].updatedAt = new Date().toISOString();
+
+    fs.writeFileSync(NOTES_FILE, JSON.stringify(notes, null, 2));
+
+    res.json(notes[noteIndex]);
+})
 
 // AI note summarizer
 app.post("/summarize", async (req, res) => {
