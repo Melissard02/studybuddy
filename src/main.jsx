@@ -1,190 +1,344 @@
-import React, {useEffect, useState} from "react";
+import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom/client";
-import './style.css';
-
-
-// THIS IS THE FRONT END
+import "./style.css";
 
 function App() {
-    // Keep track of notes fetched from backend
+    // --- STATES ---
     const [notes, setNotes] = useState([]);
-
-    // Store what's typed in the input box
+    const [newTitle, setNewTitle] = useState("");
     const [newNote, setNewNote] = useState("");
-
-    // Update notes
     const [editNoteId, setEditNoteId] = useState(null);
+    const [file, setFile] = useState(null);
+    const [showUploadModal, setShowUploadModal] = useState(false);
+    const [showNoteForm, setShowNoteForm] = useState(false);
+    const [expandedNoteId, setExpandedNoteId] = useState(null);
+    const [message, setMessage] = useState("");
+    const [showMessage, setShowMessage] = useState(false);
+    const [selectedNote, setSelectedNote] = useState(null);
+    const [summarizing, setSummarizing] = useState(false);
 
-    //Fetch them notes when load
+    // --- LOAD NOTES FROM LOCAL STORAGE ---
     useEffect(() => {
-        // Load notes before the fetch
         const savedNotes = localStorage.getItem("notes");
-        if (savedNotes) {
-            setNotes(JSON.parse(savedNotes));
-        }
+        if (savedNotes) setNotes(JSON.parse(savedNotes));
 
-        // Tells front-end what port the backend is on
-        fetch('http://localhost:5000/')
-            // Converts server response to a string that react can read
+        fetch("http://localhost:5000/")
             .then((res) => res.text())
-            // Logs extracted text to the console
             .then((data) => console.log(data))
-            // Logs errors to the console
             .catch((err) => console.log(err));
     }, []);
+
+    // --- SAVE NOTES TO LOCAL STORAGE WHEN CHANGED ---
     useEffect(() => {
-        localStorage.setItem('notes', JSON.stringify(notes));
+        localStorage.setItem("notes", JSON.stringify(notes));
     }, [notes]);
 
-    //Sends new note to the backend for storage
+    // --- ADD NOTE ---
     const handleAddNote = (e) => {
         e.preventDefault();
-        if (!newNote.trim()) return; // stop if the input is empty
+        if (!newTitle.trim() || !newNote.trim()) return;
 
         fetch("http://localhost:5000/notes", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ text: newNote }),
+            body: JSON.stringify({ title: newTitle, text: newNote }),
         })
             .then((res) => res.json())
             .then((savedNote) => {
-                setNotes((prev) => [...prev, savedNote]); // add new note to state
-                setNewNote(""); // clear input field
+                setNotes((prev) => [...prev, savedNote]);
+                setNewTitle("");
+                setNewNote("");
+                setShowNoteForm(false);
             })
             .catch((err) => console.error("Error saving note:", err));
     };
 
-    //Summarize notes logic
-    const handleSummarize = () => {
-        fetch("http://localhost:5000/summarize", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ notes }),
-        })
-        .then((res) => res.json())
-            .then((data) => {
-                alert("Summary:\n\n" + data.summary);
-            })
-        .catch((err) => console.error("Error summarizing:", err));
-    };
-
-    // Delete note logic
-    const handleDeleteNote = (id) => {
-        fetch(`http://localhost:5000/notes/${id}`, {
-            method: "DELETE",
-        })
-        .then((res) => res.json())
-        .then(() => {
-            setNotes((prev) => prev.filter((note) => note.id !== id));
-        })
-        .catch((err) => console.log(err));
-    };
-
-    // Update note logic
+    // --- UPDATE NOTE ---
     const handleUpdateNote = (e) => {
         e.preventDefault();
-        if (!newNote.trim()) return;
+        if (!newTitle.trim() || !newNote.trim()) return;
 
         fetch(`http://localhost:5000/notes/${editNoteId}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ text: newNote }),
+            body: JSON.stringify({ title: newTitle, text: newNote }),
         })
             .then((res) => res.json())
             .then((updatedNote) => {
                 setNotes((prev) =>
-                    prev.map((note) =>
-                        note.id === updatedNote.id ? updatedNote : note
-                    )
+                    prev.map((note) => (note.id === updatedNote.id ? updatedNote : note))
                 );
                 setEditNoteId(null);
+                setNewTitle("");
                 setNewNote("");
+                setShowNoteForm(false);
             })
             .catch((err) => console.error("Error updating note:", err));
     };
 
+    // --- DELETE NOTE ---
+    const handleDeleteNote = (id) => {
+        fetch(`http://localhost:5000/notes/${id}`, { method: "DELETE" })
+            .then((res) => res.json())
+            .then(() => {
+                setNotes((prev) => prev.filter((note) => note.id !== id));
+            })
+            .catch((err) => console.error("Error deleting note:", err));
+    };
 
-    // HTML Junk
+    // --- SUMMARIZE NOTES ---
+    const handleSummarize = async () => {
+        if (!notes || notes.length === 0) {
+            return showNotification("No notes to summarize yet.", "error");
+        }
+
+        try {
+            setSummarizing(true);
+            console.log("📡 Sending summarize request...");
+
+            const res = await fetch("http://127.0.0.1:5000/summarize", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                mode: "cors",
+                body: JSON.stringify({ notes }),
+            });
+
+            if (!res.ok) {
+                const txt = await res.text();
+                console.error("❌ Summarize failed:", res.status, txt);
+                showNotification("Summarizer failed. Try again in a moment.", "error");
+                return;
+            }
+
+            const data = await res.json();
+            console.log("✅ Summarize response:", data);
+            if (!data.summary) {
+                showNotification("No summary returned from server.", "error");
+                return;
+            }
+            showNotification("✨ Summary:\n\n" + data.summary);
+        } catch (err) {
+            console.error("Error summarizing:", err);
+            showNotification("Network error hitting summarizer.", "error");
+        } finally {
+            setSummarizing(false);
+        }
+    };
+
+    // --- EVENT MESSAGES ---
+    const showNotification = (text) => {
+        setMessage(text);
+        setShowMessage(true);
+        setTimeout(() => setShowMessage(false), 3000)
+    }
+
+    // --- RENDER ---
     return (
         <div className="app-container">
+            {/*--- TOAST MESSAGE ---*/}
+            {showMessage && (
+                <div className="toast">{message}</div>
+            )}
             <h1 className="app-title">StudyBuddy</h1>
-            {/*<img src="images/buddy.png" alt="Classic Buddy" width="300" height="200"/>*/}
-            <form onSubmit={editNoteId ? handleUpdateNote : handleAddNote} className="note-form">
-                <input
-                    type="text"
-                    value={newNote}
-                    onChange={(e) => setNewNote(e.target.value)}
-                    placeholder="Write your note..."
-                    className="note-input"
-                />
-                <button type="submit" className="note-button">
-                    {editNoteId ? "Update" : "Save"}
-                </button>
-                {editNoteId && (
-                    <button
-                        type="button"
-                        className="cancel-button"
-                        onClick={() => {
-                            setEditNoteId(null);
-                            setNewNote("");
-                        }}
-                    >
-                        Cancel
+
+            {/* --- NEW/EDIT NOTE FORM --- */}
+            {showNoteForm && (
+                <form
+                    onSubmit={editNoteId ? handleUpdateNote : handleAddNote}
+                    className="note-form"
+                >
+                    <input
+                        type="text"
+                        value={newTitle}
+                        onChange={(e) => setNewTitle(e.target.value)}
+                        placeholder="Enter note title..."
+                        className="note-input"
+                    />
+                    <textarea
+                        value={newNote}
+                        onChange={(e) => setNewNote(e.target.value)}
+                        placeholder="Write your note..."
+                        className="note-input"
+                        rows="5"
+                    />
+                    <div className="button-group">
+                        <button
+                            type="submit"
+                            className="note-button"
+                            disabled={!newTitle.trim() || !newNote.trim()}
+                        >
+                            {editNoteId ? "Update" : "Save"}
+                        </button>
+                        <button
+                            type="button"
+                            className="cancel-button"
+                            onClick={() => {
+                                setEditNoteId(null);
+                                setNewTitle("");
+                                setNewNote("");
+                                setShowNoteForm(false);
+                            }}
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            )}
+
+            {/* --- MAIN BUTTONS --- */}
+            {!showNoteForm && !showUploadModal && (
+                <div className="main-buttons">
+                    <button className="ai-button" onClick={handleSummarize} disabled={summarizing}>
+                        {summarizing ? "Summarizing…" : "Summarize Notes"}
                     </button>
-                )}
-            </form>
+                    <button className="note-button" onClick={() => setShowNoteForm(true)}>
+                        Write New Note
+                    </button>
+                    <button
+                        className="open-upload-button"
+                        onClick={() => setShowUploadModal(true)}
+                    >
+                        Upload a Note
+                    </button>
+                </div>
+            )}
 
-            <button className="ai-button" onClick={handleSummarize}>
-                Summarize Notes
-            </button>
-            <div className="note-list">
-                {notes.length === 0 ? (
-                    // Default message in the saved notes area
-                    <p className="no-notes">No notes yet! Start writing!</p>
-                ) : (
-                    notes.map((note) => (
-                        <div key={note.id} className="note-item">
+            {/* --- UPLOAD MODAL --- */}
+            {showUploadModal && (
+                <div className="modal-overlay" onClick={() => setShowUploadModal(false)}>
+                    <div
+                        className="modal-content"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <h2>Upload a Note File</h2>
+                        <form
+                            className="upload-form"
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                if (!file) return showNotification("Please select a file first!");
+                                const formData = new FormData();
+                                formData.append("file", file);
 
-                            {/*Display the notes in the saved area*/}
-                            <p>{note.text}</p>
-
-                            <small>
-                                {note.createdAt
-                                    ? new Date(note.createdAt).toLocaleString([], {
-                                        month: 'short',
-                                        day: 'numeric',
-                                        hour: '2-digit',
-                                        minute: '2-digit',
+                                fetch("http://localhost:5000/upload", {
+                                    method: "POST",
+                                    body: formData,
+                                })
+                                    .then((res) => res.json())
+                                    .then((data) => {
+                                        if (data.note) setNotes((prev) => [...prev, data.note]);
+                                        setFile(null);
+                                        setShowUploadModal(false);
+                                        showNotification("File uploaded and converted into a note!");
                                     })
-                                    : "No date available"}
-                            </small>
-                            <div className="button-container">
+                                    .catch((err) => console.error("Upload error:", err));
+                            }}
+                        >
+                            <input
+                                type="file"
+                                accept=".txt,.pdf,.docx"
+                                onChange={(e) => setFile(e.target.files[0])}
+                            />
+                            <div className="button-group">
+                                <button type="submit">Upload</button>
                                 <button
-                                    className="edit-button"
-                                    onClick={() => {
-                                        setEditNoteId(note.id);
-                                        setNewNote(note.text);
-                                    }}
-                                >Edit
-                                </button>
-
-
-                                {/*Delete Note Button*/}
-                                <button
-                                    className="delete-button"
-                                    onClick={() => {
-                                        handleDeleteNote(note.id)
-                                    }}
-                                >Delete
+                                    type="button"
+                                    className="close-modal"
+                                    onClick={() => setShowUploadModal(false)}
+                                >
+                                    Close
                                 </button>
                             </div>
-                        </div>
-                    ))
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* --- NOTE VIEWER MODAL --- */}
+            {selectedNote && (
+                <div className="modal-overlay" onClick={() => setSelectedNote(null)}>
+                    <div
+                        className="modal-content"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <h2>{selectedNote.title || "Untitled Note"}</h2>
+                        <p className="modal-text">{selectedNote.text}</p>
+                        {/*<button*/}
+                        {/*    className="close-modal"*/}
+                        {/*    onClick={() => setSelectedNote(null)}*/}
+                        {/*>*/}
+                        {/*    Close*/}
+                        {/*</button>*/}
+                    </div>
+                </div>
+            )}
+
+
+            {/* --- NOTE LIST --- */}
+            <div className="note-list">
+                {notes.length === 0 ? (
+                    <p className="no-notes">No notes yet! Start writing!</p>
+                ) : (
+                    notes.map((note) => {
+                        const isExpanded = expandedNoteId === note.id;
+                        const preview =
+                            note.text.split(" ").length > 5
+                                ? note.text.split(" ").slice(0, 5).join(" ") + "..."
+                                : note.text;
+                        return (
+                            <div
+                                key={note.id}
+                                className={`note-item ${isExpanded ? "expanded" : ""}`}
+                                onClick={() => {
+                                    if (note.text.length > 200) {
+                                        setSelectedNote(note);
+                                    } else {
+                                        setExpandedNoteId(isExpanded ? null : note.id);
+                                    }
+                                }}
+
+                            >
+                                <h3 className="note-title">{note.title || "Untitled"}</h3>
+                                <p className="note-preview">
+                                    {isExpanded ? note.text : preview}
+                                </p>
+                                <small>
+                                    {note.createdAt
+                                        ? new Date(note.createdAt).toLocaleTimeString([], {
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                        })
+                                        : "No date available"}
+                                </small>
+                                <div className="button-container">
+                                    <button
+                                        className="edit-button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setEditNoteId(note.id);
+                                            setNewTitle(note.title);
+                                            setNewNote(note.text);
+                                            setShowNoteForm(true);
+                                        }}
+                                    >
+                                        Edit
+                                    </button>
+                                    <button
+                                        className="delete-button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDeleteNote(note.id);
+                                        }}
+                                    >
+                                        Delete
+                                    </button>
+                                </div>
+                            </div>
+                        );
+                    })
                 )}
             </div>
         </div>
     );
 }
-
 
 ReactDOM.createRoot(document.getElementById("root")).render(<App />);
