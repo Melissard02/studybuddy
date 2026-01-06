@@ -1,41 +1,74 @@
-# Project Title (Update)
+# Studdy Buddy
 
-Add a description of your project here.
+Studdy Buddy is a web app for storing and organizing notes. You can create notes directly in the browser or upload notes from your computer. After uploading, you can generate summaries using the OpenAI API.
 
+## Features
 
-## Instructions for Build and Use
+- Create notes in the web editor
+- Upload note files from your computer
+- Summarize notes using OpenAI
 
-Steps to build and/or run the software:
+## Getting Started
 
-1. Obtain an OPENAI key and place it in your own env file with the correct variable name
-2. Have Npm installed on your computer
-3. Have both the back-end server and the front end running on different ports.
+### Prerequisites
 
-Instructions for using the software:
+- Node.js + npm installed
+- An OpenAI API key
 
-1. Write a note with the in web form
-2. Upload a note from your computer
-3. Summarize your notes using ChatGPT (tokens required for this part)
+### Setup
 
-## Development Environment 
+1. Clone the repo and install dependencies:
 
-To recreate the development environment, you need the following software and/or libraries with the specified versions:
+   ```bash
+   npm install
+   ```
 
-* IDE that you prefer, I used WebStorm for this
-* React imported
-* Express imported
-* Cors imported
+2. Create a `.env` file (or use the provided `.env.example` if you have one) and add your OpenAI key:
 
-## Useful Websites to Learn More
+   ```env
+   OPENAI_API_KEY=your_key_here
+   ```
 
-I found these websites useful in developing this software:
+   > Make sure the variable name matches what the backend expects.
 
-* [React](https://react.dev/)
-* [Mozilla](https://developer.mozilla.org/en-US/docs/Web/CSS)
-*
+3. Run the backend and frontend on separate ports (two terminals):
+
+   - Terminal 1 (backend):
+
+     ```bash
+     npm run server
+     ```
+
+   - Terminal 2 (frontend):
+
+     ```bash
+     npm run client
+     ```
+
+> If your scripts are named differently, update the commands above to match your `package.json`.
+
+## How to Use
+
+1. Create a note using the in-app form/editor **or** upload a note file.
+2. Select a note you want summarized.
+3. Click summarize to generate a summary (this uses tokens via the OpenAI API).
+
+## Development Environment
+
+Tools/libraries used:
+
+- Any IDE (I used WebStorm)
+- React (frontend)
+- Express (backend)
+- CORS (backend middleware)
+
+## Useful Resources
+
+- [React Docs](https://react.dev/)
+- [MDN Web Docs](https://developer.mozilla.org/)
+- [Express Docs](https://expressjs.com/)
+- [CORS Package](https://www.npmjs.com/package/cors)
 
 ## Future Work
 
-The following items I plan to fix, improve, and/or add to this project in the future:
-
-* [ ] Connect notes to a cloud database
+- [ ] Connect notes to a cloud database
